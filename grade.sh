@@ -1,26 +1,47 @@
 CPATH='.:lib/hamcrest-core-1.3.jar:lib/junit-4.13.2.jar'
 
-rm -rf student-submission *.class ListExamples.java testOutput.txt
-echo 'Cloning...'
-git clone $1 student-submission &> testOutput.txt
-if ! [[ $? -eq 0 ]]
-then
-	echo 'Error cloning repository.'
-	exit
-fi
+rm -rf student-submission
+
+git clone $1 student-submission
 echo 'Finished cloning'
-if ! [[ -f student-submission/ListExamples.java ]]
-then
-	echo 'Missing ListExamples.java file.'
-	exit
+
+cd student-submission
+
+# Checking if the correct file has been submitted
+if [[ -e ListExamples.java ]]
+then 
+    echo "File with the correct name was submitted (ListExamples.java)"
+else 
+    echo "File with incorrect name was submitted. Rename to ListExamples.java"
+    exit
 fi
-cp student-submission/ListExamples.java .
-javac -cp .:lib/hamcrest-core-1.3.jar:lib/junit-4.13.2.jar *.java
-if ! [[ $? -eq 0 ]]
-then
-	echo 'Compilation error.'
-	exit
+
+cd ../
+
+# Somehow get the student code and your test .java file into the same directory
+cp ./student-submission/ListExamples.java ./
+
+# Compiling the files
+javac -cp $CPATH *.java
+
+
+# Checking for compilation errors
+if [[ $? -ne 0 ]]
+then 
+    echo "There was an error compiling the file submitted"
+    cat error-trace.txt
+    exit
+else 
+    echo "The java code was compiled successfully"
 fi
-java -cp .:lib/hamcrest-core-1.3.jar:lib/junit-4.13.2.jar org.junit.runner.JUnitCore TestListExamples
-# output=`cat testOutput.txt | grep '\.\(\.\|E\)*' -x`
-# echo $output
+
+
+# Running the JUnit tests
+java -cp .:lib/hamcrest-core-1.3.jar:lib/junit-4.13.2.jar org.junit.runner.JUnitCore TestListExamples > test-output.txt
+
+echo "================================"
+last_line=$(tail -n 2 test-output.txt)
+echo $last_line
+echo "================================"
+
+echo "Execution ended"
